@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Smart Students Attendance System</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ===== reset & professional animated background ===== */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body, html { 
+  height:100%; 
+  width:100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Canvas background - IT theme */
+#attendance-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(145deg, #0a1a1f, #10262e, #0b1f26); 
+  background-size: 300% 300%;
+  animation: gradientShift 20s ease infinite;
+}
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ===== cards & container with precise 3D ===== */
+.auth-container { 
+  width: 440px; 
+  max-width: 96%; 
+  perspective: 2000px; 
+  position: relative;
+  z-index: 10;
+  margin: 0 auto; /* extra centering assurance */
+}
+.auth-card { 
+  background: rgba(10, 25, 30, 0.6); 
+  backdrop-filter: blur(16px); 
+  border-radius: 32px; 
+  padding: 35px 30px; 
+  box-shadow: 0 35px 65px rgba(0,0,0,0.7), 0 0 0 1px rgba(0, 255, 200, 0.15) inset; 
+  transform-style: preserve-3d; 
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s; 
+  position: relative; 
+  border: 1px solid rgba(0, 255, 200, 0.2);
+  max-height: 90vh; /* allow scrolling if content overflows */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #00cca0 #0a1a1f;
+}
+.auth-card::-webkit-scrollbar {
+  width: 6px;
+}
+.auth-card::-webkit-scrollbar-track {
+  background: #0a1a1f;
+  border-radius: 10px;
+}
+.auth-card::-webkit-scrollbar-thumb {
+  background: #00cca0;
+  border-radius: 10px;
+}
+.auth-card:hover { 
+  transform: rotateY(8deg) rotateX(4deg) translateZ(20px); 
+  box-shadow: 0 50px 90px rgba(0,200,200,0.3), 0 0 0 2px rgba(0, 255, 200, 0.6) inset; 
+}
+
+/* Title inside login card */
+.login-title {
+  text-align: center;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  letter-spacing: 1px;
+  word-break: break-word;
+}
+
+/* login tabs - equal width */
+.login-tabs { 
+  display: flex; 
+  gap: 12px; 
+  margin-bottom: 30px; 
+  justify-content: center;
+}
+.login-tab { 
+  flex: 1 1 0;
+  padding: 14px 8px; 
+  border: none; 
+  border-radius: 40px; 
+  background: rgba(255,255,255,0.08); 
+  color: #fff; 
+  font-weight: 600; 
+  font-size: clamp(14px, 4vw, 16px);
+  cursor: pointer; 
+  transition: all 0.3s ease; 
+  backdrop-filter: blur(5px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(0,255,200,0.2);
+}
+.login-tab.active { 
+  background: linear-gradient(135deg, #00cca0, #1a6a9e); 
+  box-shadow: 0 12px 24px rgba(0,255,200,0.5); 
+  transform: translateY(-3px);
+  border-color: transparent;
+}
+
+/* forms - neat spacing */
+form { 
+  display: flex; 
+  flex-direction: column; 
+  width: 100%;
+}
+h2 { 
+  color: #fff; 
+  font-weight: 600; 
+  text-align: center; 
+  margin-bottom: 25px; 
+  font-size: clamp(22px, 6vw, 26px); 
+  text-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  letter-spacing: 1px;
+}
+input, select { 
+  width: 100%; 
+  padding: 16px 22px; 
+  margin: 8px 0; 
+  border: none; 
+  border-radius: 40px; 
+  outline: none; 
+  font-size: 16px; 
+  background: rgba(255,255,255,0.1); 
+  color: #fff; 
+  transition: 0.3s; 
+  border: 1px solid rgba(0,255,200,0.2);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+}
+input::placeholder { color: rgba(255,255,255,0.7); }
+input:focus, select:focus { 
+  background: rgba(255,255,255,0.18); 
+  transform: scale(1.01); 
+  border-color: #00ffc3; 
+  box-shadow: 0 0 0 4px rgba(0,255,200,0.2), 0 8px 18px rgba(0,0,0,0.4);
+}
+select option { background: #1a3a47; color: white; }
+
+button { 
+  width: 100%; 
+  padding: 16px; 
+  margin-top: 20px; 
+  border: none; 
+  border-radius: 40px; 
+  font-size: 18px; 
+  font-weight: 600; 
+  color: #fff; 
+  cursor: pointer; 
+  background: linear-gradient(135deg, #00cca0, #1a6a9e); 
+  box-shadow: 0 12px 28px rgba(0,0,0,0.6); 
+  transition: all 0.3s ease;
+  position: relative; 
+  overflow: hidden;
+  letter-spacing: 0.7px;
+}
+button:hover { 
+  transform: translateY(-4px) scale(1.02); 
+  box-shadow: 0 22px 40px rgba(0,255,200,0.6); 
+}
+button::after {
+  content: ''; 
+  position: absolute; 
+  top: -60%; 
+  left: -20%; 
+  width: 150%; 
+  height: 220%;
+  background: rgba(255,255,255,0.15); 
+  transform: rotate(30deg); 
+  transition: 0.6s;
+}
+button:hover::after { left: 100%; }
+
+.small-btn { 
+  padding: 10px 18px; 
+  width: auto; 
+  margin: 4px; 
+  border-radius: 30px; 
+  font-size: clamp(13px, 3.5vw, 15px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.4);
+}
+
+.switch-link { 
+  text-align: center; 
+  margin-top: 16px; 
+  color: #b0e0ff; 
+  font-size: clamp(13px, 3.5vw, 15px); 
+  cursor: pointer; 
+  text-decoration: underline; 
+  transition: 0.2s;
+}
+.switch-link:hover { color: #fff; }
+.form-hidden { display: none !important; }
+
+/* ===== dashboard with floating + 3D rotation ===== */
+.dashboard { 
+  display: none; 
+  width: 98%; 
+  max-width: 1300px; 
+  background: rgba(10, 28, 36, 0.6); 
+  backdrop-filter: blur(20px); 
+  border-radius: 48px; 
+  padding: 35px 40px; 
+  color: #fff; 
+  flex-direction: column; 
+  box-shadow: 0 45px 85px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,255,200,0.2) inset;
+  transform-style: preserve-3d;
+  animation: levitate 7s ease-in-out infinite;
+  border: 1px solid rgba(0,255,200,0.2);
+  position: relative;
+  z-index: 10;
+  margin: 0 auto;
+  max-height: 90vh; /* allow scrolling if content overflows */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #00cca0 #0a1a1f;
+}
+.dashboard::-webkit-scrollbar {
+  width: 6px;
+}
+.dashboard::-webkit-scrollbar-track {
+  background: #0a1a1f;
+  border-radius: 10px;
+}
+.dashboard::-webkit-scrollbar-thumb {
+  background: #00cca0;
+  border-radius: 10px;
+}
+@keyframes levitate {
+  0% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+  25% { transform: translateY(-10px) rotateX(2deg) rotateY(1deg); }
+  50% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+  75% { transform: translateY(8px) rotateX(-1deg) rotateY(-1deg); }
+  100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+}
+.dashboard h2 { 
+  text-align: left; 
+  margin-bottom: 15px; 
+  font-size: clamp(28px, 5vw, 34px); 
+  font-weight: 600;
+}
+.tabs { 
+  display: flex; 
+  gap: 14px; 
+  margin-bottom: 30px; 
+  flex-wrap: wrap; 
+  align-items: center; 
+}
+.tab-btn { 
+  padding: 14px 26px; 
+  border: none; 
+  border-radius: 40px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  font-size: clamp(14px, 3.5vw, 16px);
+  background: rgba(255,255,255,0.1); 
+  color: #fff; 
+  transition: all 0.3s; 
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(0,255,200,0.2);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+}
+.tab-btn:hover { 
+  background: rgba(255,255,255,0.22); 
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 16px 28px rgba(0,255,200,0.4);
+}
+.tab-active { 
+  background: linear-gradient(135deg, #00cca0, #1a6a9e); 
+  border-color: transparent;
+  box-shadow: 0 16px 32px rgba(0,255,200,0.5);
+}
+.badge { 
+  background: #ff4757; 
+  color: white; 
+  border-radius: 40px; 
+  padding: 3px 14px; 
+  margin-left: 10px; 
+  font-size: 14px; 
+  font-weight: 600;
+}
+.tab-content { display: none; flex-direction: column; }
+
+/* tables - clean and modern, with horizontal scroll on small screens */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 28px;
+}
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  margin-top: 18px; 
+  background: rgba(0, 0, 0, 0.3); 
+  border-radius: 28px; 
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 20px 35px rgba(0,0,0,0.6);
+}
+th, td { 
+  padding: 16px 20px; 
+  text-align: left; 
+  border-bottom: 1px solid rgba(0,255,200,0.15); 
+  font-size: clamp(14px, 3vw, 15px);
+  white-space: nowrap; /* prevent text wrap for better scrolling */
+}
+th { 
+  background: rgba(0,255,200,0.15); 
+  font-weight: 600; 
+  letter-spacing: 0.5px;
+}
+tr:hover { background: rgba(0,255,200,0.1); }
+
+/* Action buttons in Manage Subjects - made smaller and grouped */
+td .action-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.edit-btn, .delete-btn { 
+  background: rgba(255,255,255,0.2); 
+  border: none; 
+  border-radius: 30px; 
+  padding: 6px 14px; 
+  font-size: 13px;
+  font-weight: 500;
+  color: white; 
+  cursor: pointer; 
+  transition: 0.2s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+}
+.edit-btn:hover { background: #1a6a9e; transform: translateY(-2px); }
+.delete-btn:hover { background: #b71c1c; transform: translateY(-2px); }
+
+.mark-btn { 
+  padding: 10px 22px; 
+  border: none; 
+  border-radius: 40px; 
+  background: #00cca0; 
+  color: white; 
+  cursor: pointer; 
+  font-weight: 600; 
+  box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+  transition: 0.2s;
+}
+.mark-btn:hover { background: #00a38b; transform: scale(1.06); }
+.approve-btn { background: #2e7d32; margin-right: 8px; padding: 8px 20px; border-radius: 40px; }
+.deny-btn { background: #b71c1c; padding: 8px 20px; border-radius: 40px; }
+.weekly-report-card { 
+  background: rgba(0,0,0,0.4); 
+  border-radius: 32px; 
+  padding: 22px; 
+  margin: 12px 0; 
+  backdrop-filter: blur(4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+.subject-form { 
+  background: rgba(0,0,0,0.4); 
+  padding: 24px; 
+  border-radius: 32px; 
+  margin-bottom: 25px; 
+  backdrop-filter: blur(4px);
+}
+</style>
+</head>
+<body>
+
+<!-- Realistic IT-themed animated background -->
+<canvas id="attendance-bg"></canvas>
+
+<div class="auth-container">
+    <!-- LOGIN CARD with tabs and title -->
+    <div class="auth-card" id="login-card">
+        <div class="login-title">Smart Students Attendance System</div>
+        <div class="login-tabs">
+            <button class="login-tab active" id="admin-tab-btn" onclick="switchLoginTab('admin')">Admin Login</button>
+            <button class="login-tab" id="student-tab-btn" onclick="switchLoginTab('student')">Student Login</button>
+        </div>
+
+        <!-- Admin Login Form -->
+        <form id="admin-login-form">
+            <h2>Admin Login</h2>
+            <input type="email" name="email" placeholder="Admin Email" value="admin@example.com" required>
+            <input type="password" name="password" placeholder="Password" value="admin123" required>
+            <button type="submit">Login as Admin</button>
+            <p class="switch-link" style="visibility:hidden;"> </p> <!-- placeholder to keep height -->
+        </form>
+
+        <!-- Student Login Form (initially hidden) -->
+        <form id="student-login-form" class="form-hidden">
+            <h2>Student Login</h2>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login as Student</button>
+            <p class="switch-link" onclick="showSignup()">Don't have an account? Sign Up</p>
+        </form>
+    </div>
+
+    <!-- Sign Up Form (hidden by default) -->
+    <form class="auth-card form-hidden" id="signup-form">
+        <h2>Sign Up</h2>
+        <input type="text" name="fullname" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+        <button type="submit">Sign Up</button>
+        <p class="switch-link" onclick="showStudentLogin()">Back to Student Login</p>
+    </form>
+
+    <!-- DASHBOARD (dynamic) -->
+    <div class="dashboard" id="dashboard">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h2 id="dashboard-title">Welcome</h2>
+            <button onclick="logout()" style="width:auto; padding:12px 28px; margin:0;">Logout</button>
+        </div>
+
+        <!-- tabs will be populated by JS based on role/approval -->
+        <div class="tabs" id="dashboard-tabs"></div>
+
+        <!-- === ATTENDANCE TAB (student) === -->
+        <div id="attendance" class="tab-content">
+            <h3>📋 Mark Attendance (Subjects)</h3>
+            <div id="attendance-subject-list" class="table-responsive"></div>
+            <div id="attendance-message" style="margin-top:15px; font-style:italic;"></div>
+        </div>
+
+        <!-- === WEEKLY REPORT TAB === -->
+        <div id="weekly" class="tab-content">
+            <h3>📅 Weekly Report</h3>
+            <div id="weekly-content" class="table-responsive"></div>
+        </div>
+
+        <!-- === SUMMARY TAB (legacy/backup) === -->
+        <div id="summary" class="tab-content">
+            <h3>📊 Summary</h3>
+            <p class="summary" id="summary-text"></p>
+        </div>
+
+        <!-- === ADMIN: APPROVALS TAB === -->
+        <div id="approvals" class="tab-content">
+            <h3>⏳ Pending Approvals</h3>
+            <div class="table-responsive">
+                <table id="approvals-table">
+                    <tr><th>Name</th><th>Email</th><th>Action</th></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- === ADMIN: MANAGE SUBJECTS (editable) === -->
+        <div id="manage-subjects" class="tab-content">
+            <h3>📚 Manage IT Subjects</h3>
+            <div class="subject-form" id="subject-form-container">
+                <h4 id="form-title">Add New Subject</h4>
+                <input type="text" id="subject-name" placeholder="Subject name (e.g. Data Structures)" />
+                <input type="text" id="subject-days" placeholder="Days (comma separated, e.g. Monday,Wednesday)" />
+                <input type="text" id="subject-timing" placeholder="Timing (e.g. 10:00-11:30)" />
+                <div style="display:flex; gap:12px; margin-top:15px; flex-wrap:wrap;">
+                    <button type="button" id="save-subject-btn" class="small-btn">Add Subject</button>
+                    <button type="button" id="clear-subject-btn" class="small-btn" style="background:gray;">Clear</button>
+                </div>
+                <input type="hidden" id="editing-index" value="-1" />
+            </div>
+            <div class="table-responsive">
+                <table id="subjects-table">
+                    <tr><th>Subject</th><th>Days</th><th>Timing</th><th>Actions</th></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- === SETTINGS / PROFILE TAB (with edit for both roles) === -->
+        <div id="settings" class="tab-content">
+            <h3>⚙️ Profile & Settings</h3>
+            <div id="settings-info"></div>
+            <div id="approval-status"></div>
+            <div id="profile-edit-form" style="margin-top:20px; background:rgba(0,0,0,0.4); padding:22px; border-radius:32px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ---------- IT-THEMED BACKGROUND: BINARY RAIN + CIRCUIT LINES + DATA PARTICLES ----------
+const canvas = document.getElementById('attendance-bg');
+const ctx = canvas.getContext('2d');
+let width, height;
+let particles = [];
+let binaryChars = '01'.split('');
+let columns = [];
+let drops = [];
+
+function initParticles() {
+    const particleCount = 60;
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 3 + 1.5,
+            speedX: (Math.random() - 0.5) * 0.2,
+            speedY: (Math.random() - 0.5) * 0.2,
+            char: binaryChars[Math.floor(Math.random() * 2)],
+            color: Math.random() > 0.6 ? '#00ffc3' : '#4affb5'
+        });
+    }
+}
+
+function initMatrix() {
+    columns = Math.floor(width / 25);
+    drops = [];
+    for (let i = 0; i < columns; i++) {
+        drops[i] = Math.floor(Math.random() * -height);
+    }
+}
+
+function updateParticles() {
+    for (let p of particles) {
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+    }
+}
+
+function drawMatrixRain() {
+    ctx.fillStyle = '#00ffc3';
+    ctx.font = '15px monospace';
+    for (let i = 0; i < drops.length; i++) {
+        let text = binaryChars[Math.floor(Math.random() * 2)];
+        let x = i * 25;
+        let y = drops[i] * 20;
+        ctx.fillStyle = 'rgba(0, 255, 195, 0.12)';
+        ctx.fillText(text, x, y);
+        if (y > height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+
+function drawCircuitLines() {
+    ctx.strokeStyle = 'rgba(0, 255, 200, 0.1)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 12; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * width, Math.random() * height);
+        ctx.lineTo(Math.random() * width, Math.random() * height);
+        ctx.strokeStyle = `rgba(0, 255, 200, ${Math.random() * 0.2})`;
+        ctx.stroke();
+    }
+    // draw some dotted grid lines
+    ctx.strokeStyle = 'rgba(0, 255, 200, 0.05)';
+    ctx.setLineDash([5, 15]);
+    for (let i = 0; i < width; i += 60) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, height);
+        ctx.stroke();
+    }
+    for (let i = 0; i < height; i += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(width, i);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]);
+}
+
+function drawParticles() {
+    for (let p of particles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        // draw binary char near particle
+        ctx.font = '12px monospace';
+        ctx.fillStyle = 'rgba(0, 255, 200, 0.4)';
+        ctx.shadowBlur = 6;
+        ctx.fillText(p.char, p.x - 10, p.y - 10);
+    }
+    ctx.shadowBlur = 0;
+}
+
+function drawBackground() {
+    ctx.clearRect(0, 0, width, height);
+    
+    // base dark gradient
+    let gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, '#0a1a1f');
+    gradient.addColorStop(1, '#10262e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    drawCircuitLines();
+    drawMatrixRain();
+    updateParticles();
+    drawParticles();
+    
+    requestAnimationFrame(drawBackground);
+}
+
+function resizeCanvas() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    particles = [];
+    initParticles();
+    initMatrix();
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+drawBackground();
+
+// ---------- MAIN APPLICATION CODE (unchanged functionality) ----------
+(function() {
+    // ---------- DATA STORE (with localStorage persistence) ----------
+    let subjectsList = [];
+    let users = [];    // admins
+    let students = [];
+
+    // Load data from localStorage or initialize defaults
+    function loadData() {
+        const stored = localStorage.getItem('attendance_system');
+        if (stored) {
+            try {
+                const data = JSON.parse(stored);
+                users = data.users || [];
+                students = data.students || [];
+                subjectsList = data.subjectsList || [
+                    { name: 'Data Structures', days: ['Monday','Wednesday'], timing: '10:00-11:30' },
+                    { name: 'Database Systems', days: ['Tuesday','Thursday'], timing: '09:00-10:30' },
+                    { name: 'Computer Networks', days: ['Monday','Friday'], timing: '14:00-15:30' },
+                    { name: 'Web Development', days: ['Wednesday','Friday'], timing: '11:00-12:30' }
+                ];
+            } catch (e) {
+                console.error('Failed to load data', e);
+                setDefaults();
+            }
+        } else {
+            setDefaults();
+        }
+    }
+
+    function setDefaults() {
+        users = [{ email:'admin@example.com', password:'admin123', role:'admin', fullname:'Admin User' }];
+        students = [];
+        subjectsList = [
+            { name: 'Data Structures', days: ['Monday','Wednesday'], timing: '10:00-11:30' },
+            { name: 'Database Systems', days: ['Tuesday','Thursday'], timing: '09:00-10:30' },
+            { name: 'Computer Networks', days: ['Monday','Friday'], timing: '14:00-15:30' },
+            { name: 'Web Development', days: ['Wednesday','Friday'], timing: '11:00-12:30' }
+        ];
+        saveData();
+    }
+
+    function saveData() {
+        const data = { users, students, subjectsList };
+        localStorage.setItem('attendance_system', JSON.stringify(data));
+    }
+
+    loadData(); // initial load
+
+    let currentUser = null;
+
+    // ---------- SESSION MANAGEMENT (persist login) ----------
+    function saveSession(user) {
+        const session = { email: user.email, role: user.role };
+        localStorage.setItem('attendance_session', JSON.stringify(session));
+    }
+
+    function clearSession() {
+        localStorage.removeItem('attendance_session');
+    }
+
+    function restoreSession() {
+        const sessionJson = localStorage.getItem('attendance_session');
+        if (!sessionJson) return false;
+        try {
+            const session = JSON.parse(sessionJson);
+            let user = null;
+            if (session.role === 'admin') {
+                user = users.find(u => u.email === session.email);
+            } else {
+                user = students.find(s => s.email === session.email);
+            }
+            if (user) {
+                currentUser = user;
+                return true;
+            } else {
+                clearSession(); // invalid session
+                return false;
+            }
+        } catch (e) {
+            clearSession();
+            return false;
+        }
+    }
+
+    // ---------- UI HELPERS ----------
+    window.switchLoginTab = function(tab) {
+        const adminTab = document.getElementById('admin-tab-btn');
+        const studentTab = document.getElementById('student-tab-btn');
+        const adminForm = document.getElementById('admin-login-form');
+        const studentForm = document.getElementById('student-login-form');
+        if (tab === 'admin') {
+            adminTab.classList.add('active');
+            studentTab.classList.remove('active');
+            adminForm.classList.remove('form-hidden');
+            studentForm.classList.add('form-hidden');
+        } else {
+            studentTab.classList.add('active');
+            adminTab.classList.remove('active');
+            studentForm.classList.remove('form-hidden');
+            adminForm.classList.add('form-hidden');
+        }
+    };
+
+    window.showSignup = function() {
+        document.getElementById('login-card').style.display = 'none';
+        document.getElementById('signup-form').classList.remove('form-hidden');
+    };
+
+    window.showStudentLogin = function() {
+        document.getElementById('signup-form').classList.add('form-hidden');
+        document.getElementById('login-card').style.display = 'block';
+        switchLoginTab('student');
+    };
+
+    window.logout = function() {
+        currentUser = null;
+        clearSession();
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('login-card').style.display = 'block';
+        document.getElementById('signup-form').classList.add('form-hidden');
+        switchLoginTab('admin'); // default to admin tab
+    };
+
+    function todayDate() {
+        const d = new Date();
+        return d.toISOString().split('T')[0];
+    }
+
+    function todayDayName() {
+        return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    }
+
+    function alreadyMarkedToday(student, subjectName) {
+        const today = todayDate();
+        return student.attendanceRecords.some(rec => rec.subject === subjectName && rec.date === today);
+    }
+
+    // Get pending count
+    function pendingCount() {
+        return students.filter(s => !s.approved).length;
+    }
+
+    // Update the approvals badge on the tab
+    function updateApprovalsBadge() {
+        const approvalsTab = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.textContent.includes('Approvals'));
+        if (approvalsTab) {
+            const count = pendingCount();
+            if (count > 0) {
+                approvalsTab.innerHTML = `Approvals <span class="badge">${count}</span>`;
+            } else {
+                approvalsTab.innerHTML = `Approvals`;
+            }
+        }
+    }
+
+    // ---------- RENDER TABS ----------
+    function renderTabs() {
+        const tabsDiv = document.getElementById('dashboard-tabs');
+        if (!currentUser) return;
+        const role = currentUser.role;
+        const isApproved = currentUser.approved !== false;
+
+        let tabsHtml = '';
+        if (role === 'admin') {
+            const pending = pendingCount();
+            const badge = pending > 0 ? `<span class="badge">${pending}</span>` : '';
+            tabsHtml = `
+                <button class="tab-btn tab-active" onclick="openTab('attendance')">Attendance</button>
+                <button class="tab-btn" onclick="openTab('weekly')">Weekly Report</button>
+                <button class="tab-btn" onclick="openTab('approvals')">Approvals ${badge}</button>
+                <button class="tab-btn" onclick="openTab('manage-subjects')">Manage Subjects</button>
+                <button class="tab-btn" onclick="openTab('settings')">Settings</button>
+            `;
+        } else {
+            if (isApproved) {
+                tabsHtml = `
+                    <button class="tab-btn tab-active" onclick="openTab('attendance')">Mark Attendance</button>
+                    <button class="tab-btn" onclick="openTab('weekly')">My Weekly Report</button>
+                    <button class="tab-btn" onclick="openTab('settings')">Profile</button>
+                `;
+            } else {
+                tabsHtml = `<button class="tab-btn tab-active" onclick="openTab('settings')">Profile (Pending)</button>`;
+            }
+        }
+        tabsDiv.innerHTML = tabsHtml;
+        setTimeout(() => {
+            const firstBtn = tabsDiv.querySelector('.tab-btn');
+            if (firstBtn) firstBtn.click();
+        }, 50);
+    }
+
+    window.openTab = function(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+        document.getElementById(tabId).style.display = 'flex';
+        event.currentTarget.classList.add('tab-active');
+
+        if (tabId === 'attendance') renderAttendanceTab();
+        if (tabId === 'weekly') renderWeeklyTab();
+        if (tabId === 'approvals') renderApprovalsTab();
+        if (tabId === 'manage-subjects') renderSubjectsTab();
+        if (tabId === 'settings') renderSettingsTab();
+    };
+
+    // ----- ATTENDANCE TAB -----
+    function renderAttendanceTab() {
+        const container = document.getElementById('attendance-subject-list');
+        const msgDiv = document.getElementById('attendance-message');
+        if (!currentUser) return;
+
+        if (currentUser.role === 'admin') {
+            let html = '<table><tr><th>Student</th><th>Subject</th><th>Date</th><th>Status</th></tr>';
+            students.forEach(s => {
+                if (s.attendanceRecords && s.attendanceRecords.length) {
+                    s.attendanceRecords.forEach(rec => {
+                        html += `<tr><td>${s.fullname}</td><td>${rec.subject}</td><td>${rec.date}</td><td>${rec.status}</td></tr>`;
+                    });
+                } else {
+                    html += `<tr><td colspan="4">${s.fullname} — no records</td></tr>`;
+                }
+            });
+            html += '</table>';
+            container.innerHTML = html;
+            msgDiv.innerHTML = '';
+            return;
+        }
+
+        // Student view
+        if (!currentUser.approved) {
+            container.innerHTML = '<p style="color:orange;">⏳ Your account is pending admin approval. You cannot mark attendance yet.</p>';
+            return;
+        }
+
+        const dayToday = todayDayName();
+        let html = '<table><tr><th>Subject</th><th>Days</th><th>Timing</th><th>Today</th><th>Action</th></tr>';
+        subjectsList.forEach(sub => {
+            const canMarkToday = sub.days.includes(dayToday);
+            const alreadyMarked = alreadyMarkedToday(currentUser, sub.name);
+            const todayMarkedStr = alreadyMarked ? '✅ Marked' : (canMarkToday ? '🟢 Available' : '⚪ Not scheduled');
+
+            html += `<tr>
+                <td>${sub.name}</td>
+                <td>${sub.days.join(', ')}</td>
+                <td>${sub.timing}</td>
+                <td>${todayMarkedStr}</td>
+                <td>`;
+            if (canMarkToday && !alreadyMarked && currentUser.approved) {
+                html += `<button class="mark-btn" onclick="markAttendanceForSubject('${sub.name}')">Mark Present</button>`;
+            } else if (!canMarkToday && !alreadyMarked) {
+                html += `<span style="opacity:0.5;">Not today</span>`;
+            } else if (alreadyMarked) {
+                html += `<span>✅</span>`;
+            }
+            html += `</td></tr>`;
+        });
+        html += '</table>';
+        container.innerHTML = html;
+        msgDiv.innerHTML = '<small>Attendance recorded with current date & time.</small>';
+    }
+
+    window.markAttendanceForSubject = function(subjectName) {
+        if (!currentUser || currentUser.role !== 'student' || !currentUser.approved) return;
+        const sub = subjectsList.find(s => s.name === subjectName);
+        if (!sub) return;
+        const dayToday = todayDayName();
+        if (!sub.days.includes(dayToday)) {
+            alert('This subject is not scheduled today.');
+            return;
+        }
+        if (alreadyMarkedToday(currentUser, subjectName)) {
+            alert('You already marked attendance for this subject today.');
+            return;
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        currentUser.attendanceRecords.push({
+            subject: subjectName,
+            date: todayDate(),
+            time: timeStr,
+            status: 'Present'
+        });
+        const studentIndex = students.findIndex(s => s.email === currentUser.email);
+        if (studentIndex !== -1) students[studentIndex] = currentUser;
+        saveData();
+
+        alert(`Attendance marked for ${subjectName} at ${timeStr}`);
+        renderAttendanceTab();
+    };
+
+    // ----- WEEKLY REPORT -----
+    function renderWeeklyTab() {
+        const container = document.getElementById('weekly-content');
+        if (!currentUser) return;
+
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + mondayOffset);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+
+        const formatDate = (d) => d.toISOString().split('T')[0];
+        const start = formatDate(monday);
+        const end = formatDate(sunday);
+
+        if (currentUser.role === 'admin') {
+            let html = `<p>Week: ${start} to ${end}</p>`;
+            students.forEach(s => {
+                const weeklyRecs = s.attendanceRecords.filter(r => r.date >= start && r.date <= end);
+                html += `<div class="weekly-report-card"><strong>${s.fullname}</strong> (${s.approved ? 'approved' : 'pending'})<br>`;
+                if (weeklyRecs.length === 0) html += 'No attendance this week.';
+                else {
+                    html += '<ul>';
+                    weeklyRecs.forEach(r => html += `<li>${r.date} ${r.subject} @ ${r.time || '--'}</li>`);
+                    html += '</ul>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        } else {
+            if (!currentUser.approved) {
+                container.innerHTML = '<p>Approval pending, no report available.</p>';
+                return;
+            }
+            const weeklyRecs = currentUser.attendanceRecords.filter(r => r.date >= start && r.date <= end);
+            let html = `<p>Week: ${start} to ${end}</p>`;
+            if (weeklyRecs.length === 0) html += '<p>No attendance records this week.</p>';
+            else {
+                html += '<table><tr><th>Date</th><th>Subject</th><th>Time</th></tr>';
+                weeklyRecs.sort((a,b) => a.date.localeCompare(b.date)).forEach(r => {
+                    html += `<tr><td>${r.date}</td><td>${r.subject}</td><td>${r.time || '--'}</td></tr>`;
+                });
+                html += '</table>';
+            }
+            container.innerHTML = html;
+        }
+    }
+
+    // ----- ADMIN APPROVALS -----
+    function renderApprovalsTab() {
+        const tbody = document.getElementById('approvals-table');
+        const pending = students.filter(s => !s.approved);
+        let html = '<tr><th>Name</th><th>Email</th><th>Action</th></tr>';
+        if (pending.length === 0) {
+            html += '<tr><td colspan="3">No pending approvals.</td></tr>';
+        } else {
+            pending.forEach(s => {
+                html += `<tr>
+                    <td>${s.fullname}</td>
+                    <td>${s.email}</td>
+                    <td>
+                        <button class="approve-btn" onclick="approveStudent('${s.email}')">Approve</button>
+                        <button class="deny-btn" onclick="denyStudent('${s.email}')">Deny</button>
+                    </td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = html;
+        updateApprovalsBadge(); // update badge after rendering
+    }
+
+    window.approveStudent = function(email) {
+        const student = students.find(s => s.email === email);
+        if (student) {
+            student.approved = true;
+            if (currentUser && currentUser.email === email) currentUser.approved = true;
+            saveData();
+            alert(`Student ${student.fullname} approved.`);
+            renderApprovalsTab();
+            renderTabs(); // update badge on tabs
+        }
+    };
+    window.denyStudent = function(email) {
+        students = students.filter(s => s.email !== email);
+        if (currentUser && currentUser.email === email) logout();
+        saveData();
+        alert('Student denied and removed.');
+        renderApprovalsTab();
+        renderTabs(); // update badge
+    };
+
+    // ----- MANAGE SUBJECTS (with edit/add/delete) -----
+    function renderSubjectsTab() {
+        const tbody = document.getElementById('subjects-table');
+        let html = '<tr><th>Subject</th><th>Days</th><th>Timing</th><th>Actions</th></tr>';
+        subjectsList.forEach((sub, index) => {
+            html += `<tr>
+                <td>${sub.name}</td>
+                <td>${sub.days.join(', ')}</td>
+                <td>${sub.timing}</td>
+                <td><div class="action-group">
+                    <button class="edit-btn" onclick="editSubject(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteSubject(${index})">Delete</button>
+                </div></td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+
+        document.getElementById('save-subject-btn').onclick = saveSubject;
+        document.getElementById('clear-subject-btn').onclick = clearSubjectForm;
+    }
+
+    window.editSubject = function(index) {
+        const sub = subjectsList[index];
+        document.getElementById('subject-name').value = sub.name;
+        document.getElementById('subject-days').value = sub.days.join(', ');
+        document.getElementById('subject-timing').value = sub.timing;
+        document.getElementById('editing-index').value = index;
+        document.getElementById('form-title').innerText = 'Edit Subject';
+        document.getElementById('save-subject-btn').innerText = 'Update Subject';
+    };
+
+    window.deleteSubject = function(index) {
+        if (confirm('Delete this subject?')) {
+            subjectsList.splice(index, 1);
+            saveData();
+            renderSubjectsTab();
+            if (parseInt(document.getElementById('editing-index').value) === index) {
+                clearSubjectForm();
+            }
+        }
+    };
+
+    function saveSubject() {
+        const name = document.getElementById('subject-name').value.trim();
+        const daysStr = document.getElementById('subject-days').value.trim();
+        const timing = document.getElementById('subject-timing').value.trim();
+        if (!name || !daysStr || !timing) {
+            alert('All fields required');
+            return;
+        }
+        const days = daysStr.split(',').map(d => d.trim()).filter(d => d.length > 0);
+        const editingIndex = parseInt(document.getElementById('editing-index').value);
+
+        if (editingIndex >= 0 && editingIndex < subjectsList.length) {
+            subjectsList[editingIndex] = { name, days, timing };
+        } else {
+            subjectsList.push({ name, days, timing });
+        }
+        saveData();
+        clearSubjectForm();
+        renderSubjectsTab();
+    }
+
+    function clearSubjectForm() {
+        document.getElementById('subject-name').value = '';
+        document.getElementById('subject-days').value = '';
+        document.getElementById('subject-timing').value = '';
+        document.getElementById('editing-index').value = '-1';
+        document.getElementById('form-title').innerText = 'Add New Subject';
+        document.getElementById('save-subject-btn').innerText = 'Add Subject';
+    }
+
+    // ----- SETTINGS / PROFILE with edit for both admin and student -----
+    function renderSettingsTab() {
+        const info = document.getElementById('settings-info');
+        const statusP = document.getElementById('approval-status');
+        const editDiv = document.getElementById('profile-edit-form');
+
+        if (currentUser.role === 'admin') {
+            info.innerHTML = `Admin: ${currentUser.fullname} (${currentUser.email})`;
+            statusP.innerHTML = '';
+            editDiv.innerHTML = `
+                <h4>Edit Profile</h4>
+                <input type="text" id="profile-fullname" placeholder="Full Name" value="${currentUser.fullname}" />
+                <input type="password" id="profile-password" placeholder="New Password (leave blank to keep current)" />
+                <input type="password" id="profile-confirm" placeholder="Confirm New Password" />
+                <button id="update-profile-btn">Update Profile</button>
+            `;
+            document.getElementById('update-profile-btn').onclick = updateProfile;
+        } else {
+            info.innerHTML = `Student: ${currentUser.fullname}<br>Email: ${currentUser.email}<br>Course: IT`;
+            statusP.innerHTML = currentUser.approved ?
+                '<span style="color:#a5d6a5;">✅ Account approved. You can mark attendance.</span>' :
+                '<span style="color:orange;">⏳ Pending admin approval. Access restricted.</span>';
+            editDiv.innerHTML = `
+                <h4>Edit Profile</h4>
+                <input type="text" id="profile-fullname" placeholder="Full Name" value="${currentUser.fullname}" />
+                <input type="password" id="profile-password" placeholder="New Password (leave blank to keep current)" />
+                <input type="password" id="profile-confirm" placeholder="Confirm New Password" />
+                <button id="update-profile-btn">Update Profile</button>
+            `;
+            document.getElementById('update-profile-btn').onclick = updateProfile;
+        }
+    }
+
+    function updateProfile() {
+        const newName = document.getElementById('profile-fullname').value.trim();
+        const newPass = document.getElementById('profile-password').value;
+        const confirm = document.getElementById('profile-confirm').value;
+
+        if (newName) currentUser.fullname = newName;
+        if (newPass) {
+            if (newPass !== confirm) {
+                alert('Passwords do not match');
+                return;
+            }
+            currentUser.password = newPass;
+        }
+
+        // Update in respective array
+        if (currentUser.role === 'admin') {
+            const index = users.findIndex(u => u.email === currentUser.email);
+            if (index !== -1) users[index] = currentUser;
+        } else {
+            const index = students.findIndex(s => s.email === currentUser.email);
+            if (index !== -1) students[index] = currentUser;
+        }
+        saveData();
+
+        document.getElementById('dashboard-title').innerText = `Welcome ${currentUser.fullname}`;
+        alert('Profile updated');
+        renderSettingsTab(); // refresh
+    }
+
+    // ---------- AUTH: Admin Login ----------
+    document.getElementById('admin-login-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        const email = this.email.value.trim();
+        const password = this.password.value.trim();
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+            currentUser = user;
+            saveSession(user);
+            document.getElementById('login-card').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'flex';
+            document.getElementById('dashboard-title').innerText = `Welcome ${user.fullname}`;
+            renderTabs();
+        } else {
+            alert('Invalid admin credentials');
+        }
+    });
+
+    // ---------- AUTH: Student Login ----------
+    document.getElementById('student-login-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        const email = this.email.value.trim();
+        const password = this.password.value.trim();
+        const user = students.find(s => s.email === email && s.password === password);
+        if (user) {
+            currentUser = user;
+            saveSession(user);
+            document.getElementById('login-card').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'flex';
+            document.getElementById('dashboard-title').innerText = `Welcome ${user.fullname}`;
+            renderTabs();
+            if (!user.approved) {
+                openTab('settings');
+            }
+        } else {
+            alert('Invalid student credentials');
+        }
+    });
+
+    // ---------- SIGNUP ----------
+    document.getElementById('signup-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        if (this.password.value !== this.confirm_password.value) {
+            alert('Passwords do not match!');
+            return;
+        }
+        const email = this.email.value.trim();
+        if (users.some(u => u.email === email) || students.some(s => s.email === email)) {
+            alert('Email already registered');
+            return;
+        }
+
+        const newStudent = {
+            fullname: this.fullname.value.trim(),
+            email: email,
+            password: this.password.value,
+            role: 'student',
+            approved: false,
+            attendanceRecords: [],
+            course: 'IT'
+        };
+        students.push(newStudent);
+        saveData();
+        alert('Signup successful! Wait for admin approval before logging in.');
+        showStudentLogin();
+        // If admin is logged in, update their badge
+        if (currentUser && currentUser.role === 'admin') {
+            updateApprovalsBadge();
+            renderTabs(); // refresh tabs to show badge
+        }
+    });
+
+    // ---------- AUTO-LOGIN IF SESSION EXISTS ----------
+    if (restoreSession()) {
+        // User is logged in from previous session
+        document.getElementById('login-card').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'flex';
+        document.getElementById('dashboard-title').innerText = `Welcome ${currentUser.fullname}`;
+        renderTabs();
+        if (currentUser.role === 'student' && !currentUser.approved) {
+            openTab('settings');
+        }
+    } else {
+        // Show login card with default admin tab
+        document.getElementById('login-card').style.display = 'block';
+        switchLoginTab('admin');
+    }
+})();
+</script>
+</body>
+</html>
